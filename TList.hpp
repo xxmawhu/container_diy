@@ -2,8 +2,8 @@
 #include <cstring>
 #include <stddef.h>
 #include <stdint.h>
-//#define LIKELY(x) __builtin_expect(!!(x), 1)
-//#define UNLIKELY(x) __builtin_expect(!!(x), 0)
+// #define LIKELY(x) __builtin_expect(!!(x), 1)
+// #define UNLIKELY(x) __builtin_expect(!!(x), 0)
 namespace hft {
 template <typename T, uint32_t LENGTH = 200>
 class TList {
