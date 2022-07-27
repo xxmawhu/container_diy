@@ -10,6 +10,9 @@ class TList {
    public:
     explicit TList(const uint32_t& min_length = 100);
     TList(const TList&);
+
+    TList<T, LENGTH>& operator=(const TList<T, LENGTH>& other);
+
     ~TList();
 
    public:
@@ -45,6 +48,13 @@ TList<T, LENGTH>::TList(const TList& other_list) : m_min_length{other_list.GetMi
     for (auto itr = other_list.end() - 1; itr >= other_list.begin(); itr--) {
         this->Append(*itr);
     }
+}
+template <class T, uint32_t LENGTH>
+TList<T, LENGTH>& TList<T, LENGTH>::operator=(const TList<T, LENGTH>& other) {
+    for (auto v : other) {
+        this->Append(v);
+    }
+    return *this;
 }
 
 template <class T, uint32_t LENGTH>

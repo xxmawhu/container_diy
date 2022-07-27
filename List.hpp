@@ -21,6 +21,14 @@ class List {
             this->Append(v);
         }
     }
+
+    List<T, LENGTH>& operator=(const List<T, LENGTH>& other) {
+        for (auto v : other) {
+            this->Append(v);
+        }
+        return *this;
+    }
+
     ~List() {
         if (m_list) {
             delete[] m_list;
