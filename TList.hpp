@@ -17,18 +17,30 @@ class TList {
 
    public:
     uint32_t GetMinLength() const { return m_min_length; }
-    void Append(const T& value);
+    void append(const T& value);
     const T* begin() const { return m_itr; }
     T* begin() { return m_itr; }
     const T* end() const { return m_itr + m_size; }
     T* end() { return m_itr + m_size; }
     T& operator[](size_t i) { return *(m_itr + i); }
     const T& operator[](size_t i) const { return *(m_itr + i); }
-    inline size_t size() const { return m_size; }
+    bool empty() { return m_size == 0; }
+    bool empty() const { return m_size == 0; }
+    size_t size() { return m_size; }
+    size_t size() const { return m_size; }
     void ReSet() { m_size = 0; }
+    void delete_by_begin(size_t i) {
+        auto delte_size = m_size > i ? i : m_size;
+        m_size = m_size - delte_size;
+        m_itr += delte_size;
+    }
+    void delete_by_end(size_t i) {
+        auto delte_size = m_size > i ? i : m_size;
+        m_size -= delte_size;
+    }
 
    private:
-    uint32_t m_min_length;
+    const uint32_t m_min_length;
     T* m_data_list;
     T* m_itr;
     size_t m_size;
@@ -46,13 +58,13 @@ TList<T, LENGTH>::TList(const TList& other_list) : m_min_length{other_list.GetMi
     m_data_list = new T[LENGTH]{};
     m_itr = m_data_list + LENGTH - 1;
     for (auto itr = other_list.end() - 1; itr >= other_list.begin(); itr--) {
-        this->Append(*itr);
+        this->append(*itr);
     }
 }
 template <class T, uint32_t LENGTH>
 TList<T, LENGTH>& TList<T, LENGTH>::operator=(const TList<T, LENGTH>& other) {
     for (auto v : other) {
-        this->Append(v);
+        this->append(v);
     }
     return *this;
 }
@@ -66,7 +78,7 @@ TList<T, LENGTH>::~TList() {
 }
 
 template <class T, uint32_t LENGTH>
-void TList<T, LENGTH>::Append(const T& value) {
+void TList<T, LENGTH>::append(const T& value) {
     if (__builtin_expect(!!(m_itr == m_data_list), 0)) {
         for (uint32_t i = 0; i < m_min_length; ++i) {
             m_data_list[LENGTH - i - 1] = m_data_list[m_min_length - 1 - i];
