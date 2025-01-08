@@ -20,8 +20,7 @@ class TList {
    public:
     size_t GetMinLength() const { return m_min_length; }
     void append(const T& value);
-    void push_back(const T& value) { append(value); }
-    void emplace_back(const T&& value);
+    void emplace_append(const T&& value);
     const T* begin() const { return m_itr; }
     T* begin() { return m_itr; }
     const T* end() const { return m_itr + m_size; }
@@ -103,7 +102,7 @@ void TList<T, LENGTH>::append(const T& value) {
     m_size = m_size + 1 > m_min_length ? m_min_length : m_size + 1;
 }
 template <class T, size_t LENGTH>
-void TList<T, LENGTH>::emplace_back(const T&& value) {
+void TList<T, LENGTH>::emplace_append(const T&& value) {
     if (m_itr == m_data_list) [[unlikely]] {
         for (size_t i = 0; i < m_min_length; ++i) {
             m_data_list[LENGTH - i - 1] = m_data_list[m_min_length - 1 - i];
