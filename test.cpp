@@ -29,4 +29,6 @@ int main() {
             printf("a = %s\n", a_content.data());
         }
     }
+    // 测试异常
+    TList<int, 20> ddd{100};
 }

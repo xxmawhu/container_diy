@@ -6,8 +6,17 @@
 #include <stdexcept>
 #include <stdint.h>
 #include <utility>
+inline void __check_length(size_t length, size_t min_length) {
+    if (min_length > length) {
+        std::string message = "TList: min_length is ";
+        message += std::to_string(min_length) + " which larger than LENGTH with value ";
+        message += std::to_string(length);
+        throw std::out_of_range(message);
+    }
+}
 template <typename T, size_t LENGTH>
 class TList {
+
    public:
     explicit TList(const size_t& min_length);
     TList(const TList&);
@@ -47,8 +56,8 @@ class TList {
 };
 
 template <class T, size_t LENGTH>
-TList<T, LENGTH>::TList(const size_t& min_length)
-    : m_min_length{min_length < LENGTH ? min_length : LENGTH - 1}, m_size{0} {
+TList<T, LENGTH>::TList(const size_t& min_length) : m_min_length{min_length}, m_size{0} {
+    __check_length(LENGTH, m_min_length);
     m_data_list = new T[LENGTH]{};
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -58,6 +67,7 @@ TList<T, LENGTH>::TList(const size_t& min_length)
 
 template <class T, size_t LENGTH>
 TList<T, LENGTH>::TList(const TList& other_list) : m_min_length{other_list.GetMinLength()}, m_size{0} {
+    __check_length(LENGTH, m_min_length);
     m_data_list = new T[LENGTH]{};
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -79,6 +89,7 @@ TList<T, LENGTH>& TList<T, LENGTH>::operator=(const TList<T, LENGTH>& other) {
 template <class T, size_t LENGTH>
 TList<T, LENGTH>::TList(const TList<T, LENGTH>&& other)
     : m_min_length{other.min_length}, m_data_list{other.m_data_list}, m_itr{other.m_itr}, m_size{other.m_size} {
+    __check_length(LENGTH, other.min_length);
     other.m_data_list = nullptr;
     other.m_itr = nullptr;
     other.m_size = 0;
