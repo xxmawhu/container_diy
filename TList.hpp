@@ -26,8 +26,10 @@ class TList {
     T* begin() { return m_itr; }
     const T* end() const { return m_itr + m_size; }
     T* end() { return m_itr + m_size; }
-    T& operator[](size_t i) { return *(m_itr + i); }
-    const T& operator[](size_t i) const { return *(m_itr + i); }
+    T& at(size_t i) { return *(m_itr + i); }
+    const T& at(size_t i) const { return *(m_itr + i); }
+    T& operator[](size_t i) { return at(i); }
+    const T& operator[](size_t i) const { return at(i); }
     bool empty() const { return m_size == 0; }
     size_t size() const { return m_size; }
     std::optional<T> back() const;  // 获取队尾的一个元素
