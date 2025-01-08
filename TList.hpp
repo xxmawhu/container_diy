@@ -1,67 +1,72 @@
 #pragma once
 #include <cstring>
+#include <optional>
+#include <random>
 #include <stddef.h>
+#include <stdexcept>
 #include <stdint.h>
-// #define LIKELY(x) __builtin_expect(!!(x), 1)
-// #define UNLIKELY(x) __builtin_expect(!!(x), 0)
-namespace hft {
-template <typename T, uint32_t LENGTH = 200>
+#include <utility>
+template <typename T, size_t LENGTH>
 class TList {
    public:
-    explicit TList(const uint32_t& min_length = 100);
+    explicit TList(const size_t& min_length);
     TList(const TList&);
+    TList(const TList&&);
 
     TList<T, LENGTH>& operator=(const TList<T, LENGTH>& other);
 
     ~TList();
 
    public:
-    uint32_t GetMinLength() const { return m_min_length; }
+    size_t GetMinLength() const { return m_min_length; }
     void append(const T& value);
+    void push_back(const T& value) { append(value); }
+    void emplace_back(const T&& value);
     const T* begin() const { return m_itr; }
     T* begin() { return m_itr; }
     const T* end() const { return m_itr + m_size; }
     T* end() { return m_itr + m_size; }
     T& operator[](size_t i) { return *(m_itr + i); }
     const T& operator[](size_t i) const { return *(m_itr + i); }
-    bool empty() { return m_size == 0; }
     bool empty() const { return m_size == 0; }
-    size_t size() { return m_size; }
     size_t size() const { return m_size; }
+    std::optional<T> back() const;  // 获取队尾的一个元素
     void ReSet() { m_size = 0; }
-    void delete_by_begin(size_t i) {
-        auto delte_size = m_size > i ? i : m_size;
-        m_size = m_size - delte_size;
-        m_itr += delte_size;
-    }
-    void delete_by_end(size_t i) {
-        auto delte_size = m_size > i ? i : m_size;
-        m_size -= delte_size;
-    }
+    /* 从end开始计算，删除第i个元素
+     * 不保证列表元素的顺序的一致性, 如pop(3), 则将末尾的元素移动3处。
+     * */
+    std::optional<T> pop_back(size_t i = 0);
 
    private:
-    const uint32_t m_min_length;
+    const size_t m_min_length;
     T* m_data_list;
     T* m_itr;
     size_t m_size;
 };
 
-template <class T, uint32_t LENGTH>
-TList<T, LENGTH>::TList(const uint32_t& min_length)
+template <class T, size_t LENGTH>
+TList<T, LENGTH>::TList(const size_t& min_length)
     : m_min_length{min_length < LENGTH ? min_length : LENGTH - 1}, m_size{0} {
     m_data_list = new T[LENGTH]{};
-    m_itr = m_data_list + LENGTH - 1;
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dis(0, LENGTH - 1);
+    m_itr = m_data_list + dis(gen);
 }
 
-template <class T, uint32_t LENGTH>
+template <class T, size_t LENGTH>
 TList<T, LENGTH>::TList(const TList& other_list) : m_min_length{other_list.GetMinLength()}, m_size{0} {
     m_data_list = new T[LENGTH]{};
-    m_itr = m_data_list + LENGTH - 1;
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dis(0, LENGTH - 1);
+    m_itr = m_data_list + dis(gen);
     for (auto itr = other_list.end() - 1; itr >= other_list.begin(); itr--) {
         this->append(*itr);
     }
 }
-template <class T, uint32_t LENGTH>
+
+template <class T, size_t LENGTH>
 TList<T, LENGTH>& TList<T, LENGTH>::operator=(const TList<T, LENGTH>& other) {
     for (auto v : other) {
         this->append(v);
@@ -69,7 +74,15 @@ TList<T, LENGTH>& TList<T, LENGTH>::operator=(const TList<T, LENGTH>& other) {
     return *this;
 }
 
-template <class T, uint32_t LENGTH>
+template <class T, size_t LENGTH>
+TList<T, LENGTH>::TList(const TList<T, LENGTH>&& other)
+    : m_min_length{other.min_length}, m_data_list{other.m_data_list}, m_itr{other.m_itr}, m_size{other.m_size} {
+    other.m_data_list = nullptr;
+    other.m_itr = nullptr;
+    other.m_size = 0;
+}
+
+template <class T, size_t LENGTH>
 TList<T, LENGTH>::~TList() {
     if (m_data_list != nullptr) {
         delete[] m_data_list;
@@ -77,10 +90,10 @@ TList<T, LENGTH>::~TList() {
     }
 }
 
-template <class T, uint32_t LENGTH>
+template <class T, size_t LENGTH>
 void TList<T, LENGTH>::append(const T& value) {
-    if (__builtin_expect(!!(m_itr == m_data_list), 0)) {
-        for (uint32_t i = 0; i < m_min_length; ++i) {
+    if (m_itr == m_data_list) [[unlikely]] {
+        for (size_t i = 0; i < m_min_length; ++i) {
             m_data_list[LENGTH - i - 1] = m_data_list[m_min_length - 1 - i];
         }
         m_itr = m_data_list + LENGTH - m_min_length;
@@ -89,5 +102,36 @@ void TList<T, LENGTH>::append(const T& value) {
     *m_itr = value;
     m_size = m_size + 1 > m_min_length ? m_min_length : m_size + 1;
 }
-
-}  // namespace hft
+template <class T, size_t LENGTH>
+void TList<T, LENGTH>::emplace_back(const T&& value) {
+    if (m_itr == m_data_list) [[unlikely]] {
+        for (size_t i = 0; i < m_min_length; ++i) {
+            m_data_list[LENGTH - i - 1] = m_data_list[m_min_length - 1 - i];
+        }
+        m_itr = m_data_list + LENGTH - m_min_length;
+    }
+    m_itr--;
+    *m_itr = std::move(value);
+    m_size = m_size + 1 > m_min_length ? m_min_length : m_size + 1;
+}
+template <class T, size_t LENGTH>
+std::optional<T> TList<T, LENGTH>::back() const {
+    std::optional<T> last_value = std::nullopt;
+    if (!empty()) [[likely]] {
+        last_value = *(end() - 1);
+    }
+    return last_value;
+}
+template <class T, size_t LENGTH>
+std::optional<T> TList<T, LENGTH>::pop_back(size_t i) {
+    std::optional<T> pop_value = std::nullopt;
+    if (i < m_size) [[likely]] {
+        auto idx = m_size - 1 - i;
+        pop_value = *(m_itr + idx);
+        if (idx != m_size - 1) {
+            *(m_itr + idx) = back().value();
+        }
+        m_size--;
+    }
+    return pop_value;
+}
